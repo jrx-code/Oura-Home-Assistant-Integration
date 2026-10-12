@@ -15,8 +15,8 @@ Thank you for your interest in contributing! This document provides guidelines f
 
 ### Prerequisites
 
-- Python 3.13 or higher
-- Home Assistant development environment
+- Docker (the test suite runs inside the `homeassistant/home-assistant:2026.9` image, Python 3.14)
+- A Home Assistant 2026.3.0+ instance for manual testing
 - Oura Ring account with API access
 
 ### Local Development
@@ -24,8 +24,8 @@ Thank you for your interest in contributing! This document provides guidelines f
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/louispires/oura-v2-custom-component.git
-cd oura-v2-custom-component
+git clone https://github.com/louispires/Oura-Home-Assistant-Integration.git
+cd Oura-Home-Assistant-Integration
 ```
 
 1. Copy the integration to your Home Assistant config:
@@ -55,12 +55,7 @@ cp -r custom_components/oura /path/to/homeassistant/config/custom_components/
 
 ### Code Formatting
 
-We use:
-
-- `black` for code formatting
-- `isort` for import sorting
-- `pylint` for linting
-- `mypy` for type checking
+No local formatter or linter is configured in this repository. Match the surrounding code style (PEP 8, type hints, async-first). CI (`.github/workflows/validate.yml`) runs `hassfest`, HACS validation, and a non-blocking `flake8` check on every push and pull request.
 
 ## Testing
 
@@ -92,8 +87,10 @@ docker compose -f docker-compose.test.yml run --rm test pytest tests/test_sensor
 - **`tests/test_integration_setup.py`**: Setup/unload lifecycle validation
 - **`tests/test_ring_battery.py`**: Ring battery and charging diagnostics
 - **`tests/test_sensor.py`**: Sensor entity behavior and attributes
-- **`tests/test_statistics.py`**: Statistics metadata and transformation logic
+- **`tests/test_setup_order.py`**: Setup ordering (historical import after platform setup, reconcile marker)
+- **`tests/test_statistics.py`**: Statistics metadata, transformation, baseline sums, and recorder handling
 - **`tests/test_statistics_import.py`**: Historical and reconciliation import coverage
+- **`tests/test_translations.py`**: `strings.json` / `translations/*.json` parity and no-URL abort strings
 
 #### Test Fixtures
 
@@ -117,7 +114,7 @@ Before submitting a pull request:
 
 ## Pull Request Process
 
-1. **Update Documentation**: Update README.md if you add new features
+1. **Update Documentation**: Update README.md if you add new features; new sensors also go in `docs/SENSORS.md` and need `strings.json` + all `translations/*.json` entries
 2. **Add Comments**: Comment your code where necessary
 3. **Test**: Ensure all functionality works as expected
 4. **Commit Messages**: Use clear and descriptive commit messages

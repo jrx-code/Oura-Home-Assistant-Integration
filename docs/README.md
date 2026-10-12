@@ -5,6 +5,8 @@ Welcome to the Oura Ring v2 Custom Component documentation!
 ## Getting Started
 
 - **[Installation Guide](INSTALLATION.md)** - Complete step-by-step installation and setup instructions
+- **[Sensor Reference](SENSORS.md)** - Every sensor with entity ID, unit, and notes
+- **[Dashboard and Automation Examples](DASHBOARDS.md)** - Ready-to-paste cards and automations
 - **[Quick Reference](QUICKREF.md)** - Quick reference guide for common tasks and configurations
 
 ## Support & Troubleshooting
@@ -20,7 +22,7 @@ Welcome to the Oura Ring v2 Custom Component documentation!
 ## Quick Links
 
 - [Main README](../README.md)
-- [GitHub Issues](https://github.com/louispires/oura-v2-custom-component/issues)
+- [GitHub Issues](https://github.com/louispires/Oura-Home-Assistant-Integration/issues)
 - [Oura API Documentation](https://cloud.ouraring.com/v2/docs)
 - [Home Assistant Developer Docs](https://developers.home-assistant.io/)
 

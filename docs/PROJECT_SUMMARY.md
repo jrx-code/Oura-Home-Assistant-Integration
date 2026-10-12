@@ -6,10 +6,11 @@ Home Assistant custom integration for Oura Ring v2 API using OAuth2.
 
 Current release baseline in repository:
 
-- **Version**: 2.9.0
-- **Entity model**: 71 sensors + 2 binary sensors
+- **Version**: 2.11.0
+- **Minimum Home Assistant**: 2026.3.0
+- **Entity model**: 98 sensors + 2 binary sensors
 - **Architecture**: DataUpdateCoordinator + configuration-driven sensor definitions
-- **Testing**: 132 tests passing in Docker test harness
+- **Testing**: 192 tests passing in Docker test harness (`homeassistant/home-assistant:2026.9`)
 
 ## Core Architecture
 
@@ -56,7 +57,9 @@ Current release baseline in repository:
 
 ## Documentation Map
 
-- `README.md`: full user-facing guide and examples
+- `README.md`: overview, quick start, options
+- `docs/SENSORS.md`: full sensor reference (entity IDs, units, notes)
+- `docs/DASHBOARDS.md`: dashboard cards and automation examples
 - `docs/INSTALLATION.md`: installation and setup
 - `docs/FIXING_REDIRECT_URI.md`: OAuth redirect troubleshooting
 - `docs/TROUBLESHOOTING.md`: operational troubleshooting
@@ -72,8 +75,9 @@ Current test suite includes:
 - Coordinator processing logic
 - Sensor and binary sensor behavior
 - Statistics import/reconciliation logic
-- Integration setup/lifecycle
+- Integration setup/lifecycle and setup ordering (historical import after platforms)
 - Ring battery + charging diagnostics
+- strings.json/translations parity and no-URL abort strings
 
 Run tests:
 
@@ -90,9 +94,9 @@ docker compose -f docker-compose.test.yml run --rm test pytest tests/test_sensor
 ## Maintenance Notes
 
 - Keep sensor metadata changes in `const.py` and processing changes in `coordinator.py` aligned.
-- Any new sensor key must include translation updates (`strings.json` + `translations/*.json`).
+- Any new sensor key must include translation updates (`strings.json` + `translations/*.json`) and, unless intentionally excluded, statistics metadata + mapping in `statistics.py`.
 - If OAuth behavior changes, update both docs and tests (especially fallback/reauth paths).
-- Keep this summary concise; use README for deep user documentation.
+- Keep this summary concise; user-facing detail belongs in README and `docs/`.
 
 ---
 

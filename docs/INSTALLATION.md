@@ -13,7 +13,7 @@ This guide walks you through installing and configuring the Oura Ring v2 integra
 
 ## Prerequisites
 
-- Home Assistant 2024.1.0 or higher
+- Home Assistant 2026.3.0 or higher
 - Active Oura Ring subscription
 - Oura Ring synced with the Oura mobile app
 - Internet connection for cloud API access
@@ -25,17 +25,9 @@ This guide walks you through installing and configuring the Oura Ring v2 integra
 1. **Install HACS** (if not already installed):
    - Follow the [HACS installation guide](https://hacs.xyz/docs/setup/download)
 
-2. **Add Custom Repository**:
+2. **Install Integration** (Oura Ring is in the HACS default repository — no custom repository needed):
    - Open HACS in Home Assistant
-   - Click on **Integrations**
-   - Click the three dots () in the top right
-   - Select **Custom repositories**
-   - Add URL: `https://github.com/louispires/oura-v2-custom-component`
-   - Category: **Integration**
-   - Click **Add**
-
-3. **Install Integration**:
-   - Search for "Oura Ring" in HACS
+   - Search for "Oura Ring"
    - Click **Download**
    - Restart Home Assistant
 
@@ -45,13 +37,13 @@ This guide walks you through installing and configuring the Oura Ring v2 integra
 
    ```bash
    cd /config
-   git clone https://github.com/louispires/oura-v2-custom-component.git
+   git clone https://github.com/louispires/Oura-Home-Assistant-Integration.git
    ```
 
 2. **Copy Integration**:
 
    ```bash
-   cp -r oura-v2-custom-component/custom_components/oura custom_components/
+   cp -r Oura-Home-Assistant-Integration/custom_components/oura custom_components/
    ```
 
 3. **Restart Home Assistant**
@@ -101,7 +93,7 @@ This guide walks you through installing and configuring the Oura Ring v2 integra
 
 ### Step 3: Keep Credentials Safe
 
- **Security Note**: Keep your Client Secret secure. Never share it or commit it to public repositories.
+⚠️ **Security Note**: Keep your Client Secret secure. Never share it or commit it to public repositories.
 
 ## Home Assistant Configuration
 
@@ -154,7 +146,7 @@ This guide walks you through installing and configuring the Oura Ring v2 integra
 
 ### Check Integration Status
 
-1. Go to **Settings**  **Devices & Services**
+1. Go to **Settings** → **Devices & Services**
 2. Look for **Oura Ring** integration
 3. It should show as "Configured"
 
@@ -167,11 +159,11 @@ This guide walks you through installing and configuring the Oura Ring v2 integra
    - Stress/resilience and advanced metrics
    - Workout/session/tag/rest-mode sensors
    - Ring battery diagnostics and binary sensors
-   - Current total: 71 sensors + 2 binary sensors
+   - Current total: 98 sensors + 2 binary sensors
 
 ### Test Data Retrieval
 
-1. Go to **Developer Tools**  **States**
+1. Go to **Developer Tools** → **States**
 2. Filter for "oura"
 3. Check that sensors have values (not "unavailable" or "unknown")
 4. Initial values may take a few minutes to appear
@@ -244,7 +236,7 @@ This guide walks you through installing and configuring the Oura Ring v2 integra
 3. Restart the integration:
    - Settings → Devices & Services
    - Click on Oura Ring
-   - Click  (three dots)
+   - Click ⋮ (three dots)
    - Select "Reload"
 
 ### Token Expired Error
@@ -254,7 +246,7 @@ This guide walks you through installing and configuring the Oura Ring v2 integra
 **Solutions**:
 
 1. Token should auto-refresh - wait a few minutes
-2. If persists, remove and re-add integration
+2. If it persists, Home Assistant shows a **Re-authenticate** prompt for Oura Ring under Settings → Devices & Services — follow it (sign in with the same Oura account)
 3. Verify application is still active in Oura Cloud
 
 ## Advanced Configuration
@@ -266,7 +258,7 @@ The default update interval is 5 minutes, which can be configured through the in
 1. Go to **Settings** → **Devices & Services**
 2. Find "Oura Ring" and click **CONFIGURE**
 3. Set your desired update interval (1-60 minutes)
-4. Configure historical data months (1-48) and re-import behavior
+4. Configure historical data months (1-48), the statistics reconcile window (0-30 days, default 7), and whether historical data is already imported (uncheck to re-import on next restart)
 5. Click **SUBMIT**
 
 The integration will automatically reload with the new interval.
@@ -288,16 +280,16 @@ Enable debug logging for detailed troubleshooting:
 
 2. Restart Home Assistant
 
-3. Check logs at **Settings**  **System**  **Logs**
+3. Check logs at **Settings** → **System** → **Logs**
 
 ### Reconcile Late-Arriving Statistics Data
 
 If you had downtime or delayed Oura cloud ingestion and need to backfill long-term statistics:
 
 1. Go to **Developer Tools** → **Actions**
-2. Choose service: `oura.reconcile_statistics`
-3. Optional: set `days` to your desired reconciliation window
-4. Run service
+2. Choose action: `oura.reconcile_statistics`
+3. Optional: set `days` (1-1440) to your desired reconciliation window
+4. Click **Perform action**
 
 You can also configure daily reconciliation in integration options via **Statistics Reconcile Window**.
 
@@ -305,8 +297,8 @@ You can also configure daily reconciliation in integration options via **Statist
 
 If you're still experiencing issues:
 
-1. **Check Logs**: Settings  System  Logs  Filter for "oura"
-2. **Search Issues**: [GitHub Issues](https://github.com/louispires/oura-v2-custom-component/issues)
+1. **Check Logs**: Settings → System → Logs → Filter for "oura"
+2. **Search Issues**: [GitHub Issues](https://github.com/louispires/Oura-Home-Assistant-Integration/issues)
 3. **Create New Issue**: Include:
    - Home Assistant version
    - Integration version
@@ -318,10 +310,10 @@ If you're still experiencing issues:
 
 Once installed:
 
-- [Create dashboard cards](../README.md#dashboard-examples)
-- [Set up automations](../README.md#usage)
-- [Explore all available sensors](../README.md#available-sensors)
+- [Create dashboard cards](DASHBOARDS.md)
+- [Set up automations](DASHBOARDS.md#automations)
+- [Explore all available sensors](SENSORS.md)
 
 ---
 
-**Need more help?** Visit the [main README](../README.md) or [open an issue](https://github.com/louispires/oura-v2-custom-component/issues).
+**Need more help?** Visit the [main README](../README.md) or [open an issue](https://github.com/louispires/Oura-Home-Assistant-Integration/issues).

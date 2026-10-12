@@ -1,5 +1,13 @@
 ﻿# Troubleshooting Guide
 
+- [OAuth Setup Fails with "401 Unauthorized"](#oauth-setup-fails-with-401-unauthorized)
+- [Authentication Stops Working Later](#authentication-stops-working-later)
+- [Sensors Missing or Unavailable](#sensors-missing-or-unavailable)
+- [API Rate Limiting](#api-rate-limiting)
+- [Long-Term Statistics Look Wrong (v2.10.1 and earlier)](#long-term-statistics-look-wrong-v2101-and-earlier)
+- [Removing the Integration & Your Data](#removing-the-integration--your-data)
+- [Integration Not Appearing](#integration-not-appearing)
+
 ## OAuth Setup Fails with "401 Unauthorized"
 
 If adding the integration fails right after you approve access on Oura's site (log shows
@@ -20,6 +28,36 @@ or a bare "OAuth token rejected" abort), check the following:
    endpoint was tried and the HTTP status returned.
 
 If none of the above resolves it, open an issue with the debug log (redact your client_id).
+
+## Authentication Stops Working Later
+
+Home Assistant refreshes the OAuth token automatically. If Oura rejects the refresh (revoked access, regenerated client secret, deleted app), Home Assistant shows a **Re-authenticate** prompt for Oura Ring under **Settings → Devices & Services**. Follow it and sign in with the **same** Oura account; signing in with a different account aborts with "You must re-authenticate with the same Oura account".
+
+## Sensors Missing or Unavailable
+
+If sensors have no values:
+
+1. Open the Oura app so the ring syncs. Sleep, readiness, and sleep-time data only reach Oura's cloud after an app sync; activity, stress, and heart rate also sync in the background.
+2. Wait for the next update (default every 5 minutes).
+3. Check **Settings → System → Logs** for `oura` errors.
+
+An unavailable sensor is usually expected. Oura simply sends no value for it yet:
+
+- **Contributor scores** (Resting Heart Rate Score, HRV Balance Score, Sleep Regularity Score) need enough recent data, e.g. a full night of HRV.
+- **New rings** (first few weeks): Cardiovascular Age, VO2 Max, Stress High Duration, Recovery High Duration, Stress Day Summary, the resilience scores, and Optimal Bedtime Start/End need a baseline first.
+- **Ring or membership limits**: SpO2 needs a Gen 3, Ring 4, or Ring 5; VO2 Max, Cardiovascular Age, and Pulse Wave Velocity need an Oura membership. Oura answers these with 401/403, which the integration treats as "no data" rather than an error. An expired membership has the same effect on all of them.
+- **Latest Bedtime End** stays unavailable while the latest sleep session is still in progress.
+- Gaps after periods of not wearing the ring.
+
+Sensors become available on their own once Oura provides values. The [Sensor Reference](SENSORS.md) marks sensors that are often unavailable with ⚠️.
+
+## API Rate Limiting
+
+The integration retries a `429 Too Many Requests` once, waiting for the `Retry-After` time Oura sends (capped at 30 seconds). If you still see rate-limit errors:
+
+- Use the default 5-minute update interval or longer.
+- Large historical imports (many months) make many requests; let them finish before reloading.
+- Check whether other tools use the same Oura application credentials.
 
 ## Long-Term Statistics Look Wrong (v2.10.1 and earlier)
 
@@ -71,15 +109,16 @@ This immediately stops all future API calls. Per [Oura's Privacy Policy](https:/
 2. Find **Oura Ring** and click the three-dot menu → **Delete**
 3. Restart Home Assistant
 
-Deleting the entry removes all associated entities and clears the long-term statistics recorded by this integration from Home Assistant's database.
+Deleting the entry removes the Oura Ring device and its entities. Recorded data is not deleted immediately:
 
-> **Note:** If you only revoke OAuth in Oura (step 1) without deleting in HA (step 2), historical data already imported into Home Assistant's statistics database will remain on your local instance. Complete both steps for a full removal.
+- **State history** ages out with the recorder's normal purge (10 days by default).
+- **Long-term statistics** stay until you delete them: go to **Developer tools → Statistics**, where they are listed as no longer provided by an entity, and remove them.
+
+> **Note:** If you only revoke OAuth in Oura (step 1) without deleting in HA (step 2), historical data already imported into Home Assistant's statistics database will remain on your local instance. Complete all steps for a full removal.
 
 ---
 
 ## Integration Not Appearing
-
-## Issue: Oura Integration Not Showing in Home Assistant
 
 If you've copied the integration to custom_components but can't see it when trying to add integrations, follow these steps:
 
@@ -87,21 +126,29 @@ If you've copied the integration to custom_components but can't see it when tryi
 
 Your Home Assistant config directory should look like this:
 
-```
+```text
 config/
   custom_components/
     oura/
       __init__.py
       api.py
       application_credentials.py
+      binary_sensor.py
       config_flow.py
       const.py
       coordinator.py
       manifest.json
       sensor.py
+      services.yaml
+      statistics.py
       strings.json
+      brand/
+        icon.png
       translations/
+        de.json
         en.json
+        es.json
+        fr.json
 ```
 
 ### Step 2: Check Home Assistant Logs
@@ -205,7 +252,7 @@ python3 -m py_compile custom_components/oura/config_flow.py
    - Try incognito/private mode
 
 4. **Check Home Assistant version**:
-   - Use a currently supported Home Assistant version
+   - This integration requires Home Assistant 2026.3.0 or newer
    - Update if necessary
 
 ### Getting Help
@@ -218,4 +265,4 @@ If still not working, gather this information:
 4. Output of: ls -la custom_components/oura/
 5. Content of manifest.json
 
-Then create an issue at: <https://github.com/louispires/oura-v2-custom-component/issues>
+Then create an issue at: <https://github.com/louispires/Oura-Home-Assistant-Integration/issues>

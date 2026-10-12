@@ -4,11 +4,14 @@ This directory contains the automated test suite and live diagnostic scripts for
 
 ## Test Structure
 
-### Automated Tests (123 tests)
+### Automated Tests (192 tests)
 
-- **`test_api.py`** (2 tests)
+- **`test_api.py`** (9 tests)
   - Timezone-aware date window and exclusive end-date construction
   - Absorbed heart rate outage counted in aggregate failure totals
+  - 429 handling: one retry honouring `Retry-After`, give up after second 429, capped default without the header
+  - Resilience endpoint: 403 → empty data, other statuses propagate
+  - Heart rate requests only `timestamp,bpm` fields (single and batched paths)
 
 - **`test_api_reauth_propagation.py`** (5 tests)
   - `OAuth2TokenRequestReauthError` escapes the batched heart rate fetch path
@@ -17,22 +20,29 @@ This directory contains the automated test suite and live diagnostic scripts for
   - Ordinary failures absorbed in the batched path too
   - Reauth error propagates through `asyncio.gather` to the coordinator
 
-- **`test_application_credentials.py`** (4 tests)
-  - Legacy endpoint succeeds → fallback never fires, `token_url` unchanged
-  - Legacy 400 → retry against new-portal endpoint → success, `token_url` updated
-  - Both endpoints 400 → `OAuth2TokenRequestReauthError` propagates to coordinator
-  - Already on fallback endpoint → succeeds in one call, no extra retry
+- **`test_application_credentials.py`** (7 tests)
+  - Primary (`moi.ouraring.com`) endpoint succeeds → no fallback, `token_url` unchanged
+  - Primary 400 on refresh → retry against legacy endpoint → success, `token_url` updated
+  - Primary 401 on code exchange → retry against legacy endpoint → success (#75 regression guard)
+  - Already on legacy and rejected → `OAuth2TokenRequestReauthError` propagates to coordinator
+  - Non-fallback status (e.g. 500) propagates without retry
+  - Already on legacy endpoint → succeeds in one call, no extra retry
+  - Failure logging includes host/grant/status but never tokens or secrets
 
-- **`test_config_flow.py`** (5 tests)
+- **`test_config_flow.py`** (9 tests)
   - Personal info fetch success and token plumbing
   - Unique ID derived from Oura user ID
   - Config entry title from email address
   - Title fallback when email is absent
   - Multiple accounts with different IDs accepted
+  - `oauth_unauthorized` / `oauth_failed` aborts remapped to `oauth_token_rejected`
+  - Unrelated aborts and successful results pass through unchanged
 
-- **`test_coordinator.py`** (38 tests)
+- **`test_coordinator.py`** (41 tests)
   - Processing methods for every data category: sleep scores, sleep details, readiness, activity, heart rate, stress, resilience, SpO2, VO2 Max, cardiovascular age, sleep time, workout, session, tags, rest mode
+  - Workouts: today-only count/list, latest workout fields (incl. source), carry-forward when no new data, replacement by new data
   - Bedtime selection: in-progress records filtered, longest sleep preferred, fallback to existing when no completed record
+  - Latest bedtime: most recent session incl. naps, in-progress end unavailable, deleted/rest ignored
   - Activity time field presence and absence
   - Heart rate sorting, 24-hour aggregation, and 10-reading fallback
   - Sleep detail date sorting and age filtering
@@ -60,21 +70,38 @@ This directory contains the automated test suite and live diagnostic scripts for
   - Ring charging binary sensor: `is_on` and availability logic
   - Device info enrichment: hardware type display names, firmware version, fallback
 
-- **`test_sensor.py`** (15 tests)
+- **`test_sensor.py`** (16 tests)
   - Device info, unique IDs, `has_entity_name`, translation keys
   - `native_value` and availability gating
-  - Boolean sensors, tags attributes, workout attributes, `workouts_today` list
+  - Boolean sensors, tags attributes, workout attributes, `workouts_today` list (and absence on other sensors)
+  - `last_workout_source` accepts values outside the documented Oura enum
   - Rest mode binary sensor
 
-- **`test_statistics.py`** (9 tests)
-  - Metadata completeness and state class alignment
-  - Sleep efficiency field mapping
-  - Timestamp parsing, value transforms, percentage computation, nested value extraction
-  - Cumulative sum accumulation
+- **`test_setup_order.py`** (5 tests)
+  - Fresh install imports history after platforms are set up
+  - Import failure resets the reconcile marker
+  - Existing install skips the historical import
+  - Reconcile skipped on the marked day, runs again after the marker is reset
 
-- **`test_statistics_import.py`** (2 tests)
+- **`test_statistics.py`** (39 tests)
+  - Metadata completeness, OpenAPI 1.39 sensor coverage, data source config structure, state class alignment
+  - Sleep efficiency mapping, bedtime timestamps excluded
+  - Sleep detail collapse (prefers `long_sleep`, falls back to longest); total sleep duration summed across naps, invalid types ignored
+  - Timestamp parsing, value transforms, percentage computation, nested value extraction
+  - Cumulative sums: accumulation, baseline seeding, hourly baseline lookup
+  - Unfinished-hour guard and heart rate grouping by local day
+  - Recorder flush before baseline reads; startup/running/stopping recorder-wait behaviour and multi-entry isolation
+  - Warning when an entity-backed sensor is imported before registration
+
+- **`test_statistics_import.py`** (3 tests)
   - Statistics import when entity exists
   - Statistics import when entity is missing
+  - Total sleep duration summed across sessions
+
+- **`test_translations.py`** (14 tests)
+  - `strings.json` has a name for every sensor
+  - Sensor and abort keys match `strings.json` in every locale (de, en, es, fr)
+  - Abort strings contain no inline URLs (hassfest rule)
 
 ## Live / Diagnostic Scripts
 
@@ -86,6 +113,7 @@ These scripts run against real Oura credentials and are not part of the automate
 
 ## Test Fixtures (`conftest.py`)
 
+- **`anyio_backend`** — runs `@pytest.mark.anyio` tests on the asyncio backend
 - **`mock_config_entry`** — ConfigEntry with OAuth2 token data
 - **`mock_hass`** — mocked `HomeAssistant` instance
 - **`mock_oura_api_client`** — `AsyncMock` API client with sample responses
@@ -113,7 +141,7 @@ docker compose -f docker-compose.test.yml run --rm test pytest tests/test_coordi
 
 ```bash
 # Heart rate freshness probe
-$env:OURA_TOKEN = "your-personal-access-token"
+$env:OURA_TOKEN = "your-oauth2-access-token"
 python tests/live_heartrate_test.py
 
 # Token endpoint probe (which OAuth endpoint accepts your app)
@@ -130,7 +158,7 @@ python tests/get_refresh_token.py
 
 ## Adding New Tests
 
-1. Match the existing async pattern: `@pytest.mark.anyio` with `asyncio_mode = "auto"` (set in `pytest.ini`)
+1. Match the existing async pattern: mark async tests with `@pytest.mark.anyio` (anyio plugin; the `anyio_backend` fixture in `conftest.py` selects asyncio). pytest-asyncio is not installed, and pytest reads `pytest.ini`, not `pyproject.toml`
 2. Use fixtures from `conftest.py` to reduce boilerplate
 3. Test files must start with `test_`; live/diagnostic scripts must not (to avoid pytest collection)
 4. Run via Docker to verify — the local venv does not have HA test dependencies
