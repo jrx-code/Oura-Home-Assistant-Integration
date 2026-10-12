@@ -112,6 +112,7 @@
       "last_workout_calories": {"name": "Calories du dernier entraînement"},
       "last_workout_intensity": {"name": "Intensité du dernier entraînement"},
       "last_workout_duration": {"name": "Durée du dernier entraînement"},
+      "last_workout_source": {"name": "Source du dernier entraînement"},
       "mindfulness_sessions_today": {"name": "Séances de pleine conscience du jour"},
       "meditation_duration_today": {"name": "Durée de méditation du jour"},
       "tags_today": {"name": "Tags du jour"},

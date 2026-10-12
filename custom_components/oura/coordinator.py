@@ -605,6 +605,7 @@ class OuraDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         "last_workout_calories",
         "last_workout_intensity",
         "last_workout_duration",
+        "last_workout_source",
         "_last_workout_raw",
     )
 
@@ -628,6 +629,7 @@ class OuraDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 if (calories := latest_workout.get("calories")) is not None:
                     processed["last_workout_calories"] = calories
                 processed["last_workout_intensity"] = latest_workout.get("intensity")
+                processed["last_workout_source"] = latest_workout.get("source")
 
                 start_dt = self._parse_iso_datetime(latest_workout.get("start_datetime"))
                 end_dt = self._parse_iso_datetime(latest_workout.get("end_datetime"))

@@ -440,6 +440,7 @@ def test_process_workout_data():
                     "distance": 5000,
                     "calories": 320,
                     "intensity": "moderate",
+                    "source": "live_oura_heart_rate",
                     "start_datetime": f"{today}T06:30:00+00:00",
                     "end_datetime": f"{today}T07:00:00+00:00",
                 }
@@ -457,6 +458,7 @@ def test_process_workout_data():
     assert processed["last_workout_calories"] == 320
     assert processed["last_workout_intensity"] == "moderate"
     assert processed["last_workout_duration"] == 30
+    assert processed["last_workout_source"] == "live_oura_heart_rate"
 
 
 def test_process_workout_multiple_today():
@@ -544,6 +546,7 @@ def test_process_workout_preserves_last_values():
         "last_workout_calories": 500,
         "last_workout_intensity": "hard",
         "last_workout_duration": 45,
+        "last_workout_source": "autodetected",
         "_last_workout_raw": {"activity": "cycling"},
     }
 
@@ -559,6 +562,7 @@ def test_process_workout_preserves_last_values():
     assert processed["last_workout_calories"] == 500
     assert processed["last_workout_intensity"] == "hard"
     assert processed["last_workout_duration"] == 45
+    assert processed["last_workout_source"] == "autodetected"
     assert processed["_last_workout_raw"] == {"activity": "cycling"}
 
 
@@ -578,6 +582,7 @@ def test_process_workout_no_previous_data():
     assert "last_workout_calories" not in processed
     assert "last_workout_intensity" not in processed
     assert "last_workout_duration" not in processed
+    assert "last_workout_source" not in processed
 
 
 def test_process_workout_new_replaces_old():

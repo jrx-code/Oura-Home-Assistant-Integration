@@ -175,6 +175,8 @@ SENSOR_TYPES: Final = {
     "last_workout_calories": {"name": "Last Workout Calories", "icon": "mdi:fire", "unit": UnitOfEnergy.KILO_CALORIE, "device_class": None, "state_class": "measurement", "entity_category": None, "data_category": "workout"},
     "last_workout_intensity": {"name": "Last Workout Intensity", "icon": "mdi:speedometer", "unit": None, "device_class": "enum", "state_class": None, "entity_category": None, "options": ["easy", "moderate", "hard"], "data_category": "workout"},
     "last_workout_duration": {"name": "Last Workout Duration", "icon": "mdi:timer", "unit": UnitOfTime.MINUTES, "device_class": "duration", "state_class": "measurement", "entity_category": None, "data_category": "workout"},
+    # Plain text, not enum: Oura keeps adding source values and HA rejects enum states outside options
+    "last_workout_source": {"name": "Last Workout Source", "icon": "mdi:import", "unit": None, "device_class": None, "state_class": None, "entity_category": EntityCategory.DIAGNOSTIC, "data_category": "workout"},
 
     # Session sensors
     "mindfulness_sessions_today": {"name": "Mindfulness Sessions Today", "icon": "mdi:meditation", "unit": None, "device_class": None, "state_class": "total", "entity_category": None, "data_category": "session"},
