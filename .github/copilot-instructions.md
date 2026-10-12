@@ -10,17 +10,18 @@ custom_components/oura/
 ├── api.py               # OuraApiClient: 18 endpoints fetched in parallel via asyncio.gather
 ├── coordinator.py       # OuraDataUpdateCoordinator: modular _process_* methods per data category
 ├── sensor.py            # OuraSensor: CoordinatorEntity, config-driven from SENSOR_TYPES
-├── binary_sensor.py     # OuraRestModeBinarySensor: single rest-mode entity
-├── statistics.py        # Historical data import as HA long-term statistics
-├── config_flow.py       # OAuth2 flow + options flow (update interval, historical months)
+├── binary_sensor.py     # Rest mode + ring charging binary sensors
+├── statistics.py        # Historical import + daily reconcile as HA long-term statistics
+├── config_flow.py       # OAuth2 flow + options flow (update interval, historical months, reconcile days, re-import toggle)
 ├── const.py             # All sensor definitions, API URLs, scopes, defaults
-├── application_credentials.py  # OAuth2 credential provider
-└── strings.json         # Translation source (en); translations/ has de, es, fr
+├── application_credentials.py  # OAuth2 credential provider (moi.ouraring.com primary, legacy fallback)
+├── services.yaml        # oura.reconcile_statistics action
+└── strings.json         # Translation source (en); translations/ has de, en, es, fr
 ```
 
 **Data flow**: `api.py` fetches all endpoints → `coordinator.py` processes raw data via `_process_*` methods → entities read from `coordinator.data[key]`.
 
-**Key pattern**: Sensors are **configuration-driven** — defined in `SENSOR_TYPES` dict in `const.py` (name, icon, unit, device_class, state_class, entity_category, data_category). Adding a sensor means adding an entry there + a processing method in the coordinator.
+**Key pattern**: Sensors are **configuration-driven** — defined in `SENSOR_TYPES` dict in `const.py` (name, icon, unit, device_class, state_class, entity_category, data_category). Adding a sensor means adding an entry there + coordinator processing + `strings.json`/`translations/*.json` names + `statistics.py` metadata/mapping (unless intentionally excluded).
 
 ## Build and Test
 
@@ -32,7 +33,7 @@ docker compose -f docker-compose.test.yml run --rm test
 docker compose -f docker-compose.test.yml run --rm test pytest tests/test_sensor.py -v
 ```
 
-Test image: `homeassistant/home-assistant:2026.9`. Tests use `pytest` + `pytest-asyncio` (async throughout).
+Test image: `homeassistant/home-assistant:2026.9` (Python 3.14). Config is `pytest.ini`; async tests use `@pytest.mark.anyio` (anyio plugin, asyncio backend) — pytest-asyncio is not installed. Minimum supported Home Assistant: 2026.3.0.
 
 ## Conventions
 
@@ -40,7 +41,7 @@ Test image: `homeassistant/home-assistant:2026.9`. Tests use `pytest` + `pytest-
 - **All entities** use `CoordinatorEntity`, `_attr_has_entity_name = True`, `_attr_translation_key`
 - **Device info**: shared device per config entry (`Oura Ring` / `Oura` / `SERVICE`)
 - **Availability**: entity is available only when coordinator has data AND the sensor key exists AND value is not None
-- **API resilience**: 401s on optional endpoints (Gen3-only, subscription-limited) return empty data, not errors. Transient failures preserve existing data.
+- **API resilience**: 401/403 on optional endpoints (Gen3-only, subscription-limited) return empty data, not errors; 429 retried once honouring `Retry-After`. Transient failures preserve existing data.
 - **Entity categories**: diagnostic sensors use `EntityCategory.DIAGNOSTIC` (see `const.py`)
 - **Translation keys**: every sensor has a translation key matching its `const.py` key; update `strings.json` + `translations/` when adding sensors
 - **Historical import**: one-time import tracked via `CONF_HISTORICAL_DATA_IMPORTED` persistent flag in config entry
@@ -57,7 +58,9 @@ Test image: `homeassistant/home-assistant:2026.9`. Tests use `pytest` + `pytest-
 
 See [docs/](../docs/) for detailed guides:
 - [INSTALLATION.md](../docs/INSTALLATION.md) — setup and prerequisites
+- [SENSORS.md](../docs/SENSORS.md) — sensor reference (update when adding/removing sensors)
+- [DASHBOARDS.md](../docs/DASHBOARDS.md) — dashboard and automation examples
 - [TROUBLESHOOTING.md](../docs/TROUBLESHOOTING.md) — common issues
 - [CONTRIBUTING.md](../docs/CONTRIBUTING.md) — contribution workflow
 - [PROJECT_SUMMARY.md](../docs/PROJECT_SUMMARY.md) — component overview
-- [Oura API specs](../docs/Oura%20API/) — OpenAPI 1.27/1.28 schemas
+- [Oura API specs](../docs/Oura%20API/) — OpenAPI schemas 1.27 → 1.41 (latest: `openapi-1.41.json`)

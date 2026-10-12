@@ -178,6 +178,20 @@ def test_workout_sensor_exposes_raw_workout_attribute(mock_coordinator):
     assert sensor.extra_state_attributes == {"workout": {"activity": "running", "distance": 5000}}
 
 
+def test_last_workout_source_accepts_unlisted_values(mock_coordinator):
+    """Test workout source is plain text so new Oura source values don't break the entity."""
+    mock_coordinator.data = {"last_workout_source": "some_future_source"}
+
+    sensor = OuraSensor(
+        coordinator=mock_coordinator,
+        sensor_type="last_workout_source",
+        sensor_info=SENSOR_TYPES["last_workout_source"],
+    )
+
+    assert sensor.device_class is None
+    assert sensor.native_value == "some_future_source"
+
+
 def test_workouts_today_sensor_exposes_workout_list(mock_coordinator):
     """Test workouts_today sensor exposes the full list of today's workouts."""
     workouts = [

@@ -92,7 +92,7 @@ def test_measurement_state_classes():
 
 def test_no_state_class_for_text_sensors():
     """Test that text-based sensors don't have state_class."""
-    text_sensors = ["stress_day_summary", "resilience_level"]
+    text_sensors = ["stress_day_summary", "resilience_level", "last_workout_source"]
     
     for sensor_key in text_sensors:
         assert sensor_key in SENSOR_TYPES, f"Sensor {sensor_key} not in SENSOR_TYPES"
