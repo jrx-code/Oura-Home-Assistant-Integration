@@ -1,4 +1,31 @@
-﻿# Oura Ring v2 Integration v2.10.3
+﻿# Oura Ring v2 Integration v2.11.0
+
+## ✨ NEW IN v2.11.0 — Oura OpenAPI 1.41 alignment
+
+### Last Workout Source sensor
+
+- **Added**: `Last Workout Source` diagnostic sensor (`sensor.oura_ring_last_workout_source`) showing how the latest workout was recorded: `manual`, `autodetected`, `confirmed`, `workout_heart_rate`, and the two sources new in Oura API 1.41, `live_third_party_heart_rate` and `live_oura_heart_rate`.
+- The sensor is plain text rather than an enum, so a source value Oura adds later shows up as-is instead of making the entity fail. Like the other `Last Workout *` sensors, it keeps its value when no new workout is in the polling window.
+- The only other 1.41 change, the deprecated sleep `ring_id` field, isn't used by the integration.
+
+## 📚 DOCUMENTATION
+
+- **README rewritten** as a short overview: install, setup, a sensor summary table, an options table, and long-term statistics in brief.
+- **New [Sensor Reference](docs/SENSORS.md)**: every sensor with its entity ID, unit, and notes.
+- **New [Dashboard and Automation Examples](docs/DASHBOARDS.md)**: all ApexCharts, entity, and gauge cards plus the automations previously in the README. Fixed the "open curtains" automation, whose `target:` was mis-indented.
+- **[Troubleshooting](docs/TROUBLESHOOTING.md) consolidated**: re-authentication, unavailable sensors, and rate limits now live there with a table of contents.
+- **Corrected across all docs**: sensor totals (98 sensors + 2 binary sensors), six wrong entity IDs in the quick reference, HACS install (the integration is in the HACS default repository), test documentation, and removal guidance: deleting the integration does **not** delete its long-term statistics; remove them under **Developer tools → Statistics**.
+
+## ⚠️ REQUIREMENTS
+
+- `hacs.json` now declares **Home Assistant 2026.3.0** as the minimum. The integration has needed it since v2.8.4 (it imports `OAuth2TokenRequestReauthError`, added in Home Assistant 2026.3.0); HACS previously advertised 2024.1.0, so older Home Assistant installs could download a version that failed to load.
+
+## 🧪 TESTING & VALIDATION
+
+- ✅ 192 automated tests passing (up from 191): workout source processing and carry-forward, and acceptance of source values outside the documented enum.
+- ✅ Docs checked by script: every entity ID in the docs matches the code, every relative link and anchor resolves, and the sensor reference covers all 98 sensors.
+
+# Oura Ring v2 Integration v2.10.3
 
 ## 🐛 FIXES IN v2.10.3
 
